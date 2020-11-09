@@ -1,5 +1,4 @@
 flask
-json
 pickle
 numpy
 uwsgi
