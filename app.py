@@ -7,12 +7,14 @@ import numpy as np
 app = Flask(__name__)
 
 
-__locations = None
-__data_columns = None
-__model = None
-
-
 def get_estimated_price(location, sqft, bhk, bath):
+    
+    with open("artifacts/columns.json", "r") as f:
+        __data_columns = json.load(f)['data_columns']
+
+    with open("artifacts/bangalore_home_prices_model.pickle", "rb") as f:
+        __model = pickle.load(f)
+    
     try:
         loc_index = __data_columns.index(location.lower())
     except:
@@ -29,23 +31,11 @@ def get_estimated_price(location, sqft, bhk, bath):
 
 
 def get_location_name():
-    return __locations
-
-
-def load_saved_artifacts():
-    print("Loading saved artifacts...")
-    global __data_columns
-    global __locations
-    global __model
-
     with open("artifacts/columns.json", "r") as f:
         __data_columns = json.load(f)['data_columns']
         __locations = __data_columns[3:]
-
-    with open("artifacts/bangalore_home_prices_model.pickle", "rb") as f:
-        __model = pickle.load(f)
-
-    print("Loading artifacts completed.")
+    
+    return __locations
 
 
 @app.route('/get_location_names', methods=['GET'])
@@ -72,6 +62,7 @@ def predict_home_price():
 
 if __name__ == "__main__":
     print("Starting python server for Real Estate App")
-    load_saved_artifacts()
     app.run()
+
+
 
