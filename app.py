@@ -1,13 +1,57 @@
 from flask import Flask, request, jsonify
-import util
+import json
+import pickle
+import numpy as np
+
+
 app = Flask(__name__)
+
+
+__locations = None
+__data_columns = None
+__model = None
+
+
+def get_estimated_price(location, sqft, bhk, bath):
+    try:
+        loc_index = __data_columns.index(location.lower())
+    except:
+        loc_index = -1
+    
+    x = np.zeros(len(__data_columns))
+    x[0] = sqft
+    x[1] = bath
+    x[2] = bhk
+    if loc_index >= 0:
+        x[loc_index] = 1
+
+    return round(__model.predict([x])[0], 2)
+
+
+def get_location_name():
+    return __locations
+
+
+def load_saved_artifacts():
+    print("Loading saved artifacts...")
+    global __data_columns
+    global __locations
+    global __model
+
+    with open("artifacts/columns.json", "r") as f:
+        __data_columns = json.load(f)['data_columns']
+        __locations = __data_columns[3:]
+
+    with open("artifacts/bangalore_home_prices_model.pickle", "rb") as f:
+        __model = pickle.load(f)
+
+    print("Loading artifacts completed.")
 
 
 @app.route('/get_location_names', methods=['GET'])
 def get_location_names():
-    util.load_saved_artifacts()
     response = jsonify({
-        'locations': util.get_location_names()
+        'locations': get_location_name()
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
@@ -15,13 +59,12 @@ def get_location_names():
 
 @app.route('/predict_home_price', methods=['POST'])
 def predict_home_price():
-    util.load_saved_artifacts()
     total_sqft = float(request.form['total_sqft'])
     location = request.form['location']
     bhk = float(request.form['bhk'])
     bath = float(request.form['bath'])
     response = jsonify({
-        'estimated_price': util.get_estimated_price(location, total_sqft, bhk, bath)
+        'estimated_price': get_estimated_price(location, total_sqft, bhk, bath)
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
@@ -29,5 +72,6 @@ def predict_home_price():
 
 if __name__ == "__main__":
     print("Starting python server for Real Estate App")
+    load_saved_artifacts()
     app.run()
 
