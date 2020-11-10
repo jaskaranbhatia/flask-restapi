@@ -5,6 +5,7 @@ app = Flask(__name__)
 
 @app.route('/get_location_names', methods=['GET'])
 def get_location_names():
+    util.load_saved_artifacts()
     response = jsonify({
         'locations': util.get_location_names()
     })
@@ -14,6 +15,7 @@ def get_location_names():
 
 @app.route('/predict_home_price', methods=['POST'])
 def predict_home_price():
+    util.load_saved_artifacts()
     total_sqft = float(request.form['total_sqft'])
     location = request.form['location']
     bhk = float(request.form['bhk'])
@@ -26,7 +28,6 @@ def predict_home_price():
 
 
 if __name__ == "__main__":
-    util.load_saved_artifacts()
     print("Starting python server for Real Estate App")
     app.run()
 
